@@ -1,11 +1,12 @@
 module Parser where
 import Data.Typeable
+import Data.Either
 
 -- Data types
 data Token = Program | End | Assign | Read | Write | If | While | Greater | Lesser | GrEqual |LsEqual | Equal | Sum | Sub | Mult | Div | Error
     deriving (Eq, Show)
 
-data TokenTree token = Nil | Node2 Token (TokenTree token) (TokenTree token) | Leaf Token | ErrorLeaf String | Init Token String (TokenTree token) |LeafS String | NodeS String (TokenTree token) | Node1 (TokenTree token)
+data TokenTree token = Nil | Node2 Token (TokenTree token) (TokenTree token) | Leaf Token | ErrorLeaf String | Init Token String (TokenTree token) |LeafS String | NodeS String (TokenTree token) | Node1 (TokenTree token) | NonParsed String
     deriving (Eq, Show)
 
 cop :: String -> Bool --cop: checks if it's a comparison operator
@@ -15,12 +16,12 @@ eop y = y `elem` ["+", "-"]
 top :: String -> Bool --checks if it's a term operator
 top y = y `elem` ["*", "/"]
 
-comp :: String -> [String] -> Bool
-comp s1 sn = sequen expr cop s1 sn
-expr :: String -> [String] -> Bool
-expr s1 sn = sequen term eop s1 sn
-term :: String -> [String] -> Bool
-term s1 sn = sequen fact top s1 sn
+-- comp :: String -> [String] ->TokenTree a
+-- comp s1 sn = sequen expr cop s1 sn
+-- expr :: String -> [String] ->TokenTree a
+-- expr s1 sn = sequen term eop s1 sn
+-- term :: String -> [String] -> TokenTree a
+-- term s1 sn = sequenTerm s1 sn --fact function doesnt return a tokentree, so we need to create another function to it
 
 stat :: [String] -> TokenTree a
 stat (t:s) =
@@ -50,23 +51,34 @@ prog (h:t) = if (h=="program") then
             else
                 ErrorLeaf "'program' expected"
 
-sequen :: (String -> [String] -> Bool) -> (String -> Bool) -> String -> [String] -> Bool
-sequen nonterm sep s1 sn = sep s1
+sequen :: (String -> [String] -> TokenTree a) -> (String -> Bool) -> String -> [String] -> TokenTree a
+sequen nonterm sep s1 sn = 
+                        let x1 = (nonterm s1 sn) in
+                            if (isIdent x1) then do
+                                let t = s1 !! 0
+                                let s3 = tail s1
+                                let x2 = sequen nonterm sep s3 sn
+                                Node2 (checkToken [t]) x1 x2
+                            else
+                                NonParsed x1
 
-fact :: String -> [String] -> Bool --change type later
+-- sequenTerm :: String -> [String] -> TokenTree a
+-- sequenTerm s1 sn = 
+
+fact :: String -> [String] -> [String]
 fact s1 sn =
             if (s1 !! 0) == '(' then do
                 let s1 = (sn !! 0)
-                -- E = expr s2 s3
+                -- let e = expr (tail sn) sn
                 let s3 = ')'
                 let nonparsed = tail sn
-                -- e
-                -- (["True"] ++ nonparsed) --temporary
-                True
+                -- [e, nonparsed]
+                (["True"] ++ nonparsed) --temporary
+                
             else
-                -- sn
-                False
-             
+                sn
+
+
 isIdent :: Typeable a => a -> Bool
 isIdent a = (typeOf a == typeOf "String")
 
@@ -83,12 +95,12 @@ checkToken s = case s of
     "-" -> Sub
     _ -> Error
 
+getNonParsedValue :: TokenTree a -> String -- as "either" function wasn't working, we need to use only one datatype for the functions returnings.
+getNonParsedValue (NonParsed value) = value
 
 
-
-
-input = "program caio ; if read book a := b"
-parser = prog (words input)
+-- input = "program caio ; if read book a := b"
+-- parser = prog (words input)
 
 
 -- beautify :: TokenTree a -> String
