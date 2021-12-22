@@ -15,6 +15,12 @@ eop y = y `elem` ["+", "-"]
 top :: String -> Bool --checks if it's a term operator
 top y = y `elem` ["*", "/"]
 
+comp :: String -> [String] -> Bool
+comp s1 sn = sequen expr cop s1 sn
+expr :: String -> [String] -> Bool
+expr s1 sn = sequen term eop s1 sn
+term :: String -> [String] -> Bool
+term s1 sn = sequen fact top s1 sn
 
 stat :: [String] -> TokenTree a
 stat (t:s) =
@@ -44,8 +50,10 @@ prog (h:t) = if (h=="program") then
             else
                 ErrorLeaf "'program' expected"
 
+sequen :: (String -> [String] -> Bool) -> (String -> Bool) -> String -> [String] -> Bool
+sequen nonterm sep s1 sn = sep s1
 
-fact :: String -> [String] -> [String]
+fact :: String -> [String] -> Bool --change type later
 fact s1 sn =
             if (s1 !! 0) == '(' then do
                 let s1 = (sn !! 0)
@@ -53,17 +61,16 @@ fact s1 sn =
                 let s3 = ')'
                 let nonparsed = tail sn
                 -- e
-                (["True"] ++ nonparsed) --temporary
+                -- (["True"] ++ nonparsed) --temporary
+                True
             else
-                sn
+                -- sn
+                False
              
 isIdent :: Typeable a => a -> Bool
 isIdent a = (typeOf a == typeOf "String")
 
-input = "program caio ; if read book a := b"
-parser = prog (words input)
-
-checkToken :: String -> Token a --as we can't do the same we do in Oz for haskell (about the record labels), we have this function to return the right token for each input string
+checkToken :: String -> Token --as we can't do the same we do in Oz for haskell (about the record labels), we have this function to return the right token for each input string
 checkToken s = case s of
     ">" -> Greater
     ">=" -> GrEqual
@@ -75,6 +82,14 @@ checkToken s = case s of
     "/" -> Div
     "-" -> Sub
     _ -> Error
+
+
+
+
+
+input = "program caio ; if read book a := b"
+parser = prog (words input)
+
 
 -- beautify :: TokenTree a -> String
 -- beautify t = (let name = (getTokenName a))
