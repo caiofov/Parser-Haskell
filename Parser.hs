@@ -16,32 +16,44 @@ top :: String -> Bool --checks if it's a term operator
 top y = y `elem` ["*", "/"]
 
 
--- stat :: [Token] -> TokenTree a
--- stat (t:s) = Node t (Node (stat s) Nil)
+stat :: [Token] -> TokenTree a
+stat (t:s) =if s == [] then Leaf t else Node t (stat s)
+stat _ = ErrorLeaf "Token error"
 
 prog :: [String] -> TokenTree a
 prog (h:t) = if (h=="program") then 
-                if (t !! 1 /= ";") then ErrorLeaf "; expected"
+                if (t !! 1 /= ";") then ErrorLeaf " ';' expected"
                 else
                     Head Program (t!!0) Nil --insert the other functions here
             else
-                ErrorLeaf "program expected"
+                ErrorLeaf " 'program' expected"
 
--- t1 = [While, If, Begin]
--- t2 = stat t1
 
--- isId :: a -> Bool
--- isId a = typeOf a == typeOf "String" || typeOf a == typeOf While
+fact :: String -> [String] -> [String]
+fact s1 sn =
+            if (s1 !! 0) == '(' then do
+                let s1 = (sn !! 0)
+                -- E = expr s2 s3
+                let s3 = ')'
+                let nonparsed = tail sn
+                -- e
+                (["True"] ++ nonparsed) --temporary
+            else
+                sn
+             
+
+
 
 
 -- TO DO
--- Prog
--- Stat
+-- Stat 10%
 -- Sequence
--- Fact
+-- Fact 90%
 -- ID
+-- expr, term, comp
 
 -- DONE
+-- prog 80%
 -- eop
 -- cop
 -- top
